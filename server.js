@@ -6,10 +6,8 @@ const port = 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('./static'));
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 
 mongoose.connect('mongodb://127.0.0.1:27017/BlogSystem',{})
 .then(() => {
@@ -37,6 +35,18 @@ const commentschema = new Schema({
 });
 const Comment = mongoose.model('Comment', commentschema);
 
+app.get('/', (req, res) => {
+    res.sendFile('/blogs.html', { root: __dirname + '/static' });
+});
+
+
+
+// search blogs
+app.get('/blogs/search/:search_term', async (req, res) => {
+    const search_term = req.params.search_term;
+    const blogs = await Blog.find({ title: { $regex: search_term, $options: 'i' } });
+    res.send(blogs);
+});
 // Get all blogs
 app.get('/blogs', async (req, res) => {
     const blogs = await Blog.find();
@@ -49,6 +59,10 @@ app.get('/blogs/:id', async (req, res) => {
     res.send(blog);
 });
 
+
+app.get('/addblog', (req, res) => {
+    res.sendFile('/blog.html', { root: __dirname + '/static' });
+});
 // Create a blog
 app.post('/blogs', async (req, res) => {
     const blog = new Blog({
@@ -58,6 +72,8 @@ app.post('/blogs', async (req, res) => {
     await blog.save();
     res.send(blog);
 });
+
+
 
 // Update a blog
 app.patch('/blogs/:id', async (req, res) => {
@@ -80,6 +96,12 @@ app.get('/comments/:id', async (req, res) => {
     const blogId = req.params.id;
     const comments = await Comment.find({ blog: blogId });
     res.send(comments);
+});
+
+// Get a specific comment details
+app.get('/comments/details/:id', async (req, res) => {
+    const comment = await Comment.findById(req.params.id);
+    res.send(comment);
 });
 
 // Create a comment on Specific blog
