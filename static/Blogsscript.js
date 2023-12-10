@@ -25,7 +25,7 @@ get_blogs = async (search_term) => {
     blog_list.innerHTML += `
       <div class="blog">
               <h2>${blog.title}</h2>
-              <p>${blog.content}</p>
+              <p>${blog.description}</p>
               <button onclick="readmore('${blog._id}')"class="btn">Read More</button>
       </div>
       `;
@@ -41,6 +41,9 @@ readmore = async (id) => {
   blog_list.innerHTML += `
     <div class="specificblog">
             <h2>${blog.title}</h2>
+            <h3>${blog.authour}</h3>
+            <p>created at: ${blog.createdat}</p>
+            <p>${blog.description}</p>
             <p>${blog.content}</p>
             <button onclick="editblog('${blog._id}')"class="btn">Edit Blog</button>
             <button onclick="deleteblog('${blog._id}')"class="btn">Delete Blog</button>
@@ -67,21 +70,21 @@ editblog = async (id) => {
     <label for="title">Title:</label>
     <input type="text" id="title" name="title" required><br>
 
-    <label for="content">Content:</label>
-    <textarea id="content" name="content" required></textarea><br>
-
     <label for="author">Author:</label>
     <input type="text" id="author" name="author" required><br>
 
     <label for="description">Description:</label>
     <textarea id="description" name="description" required></textarea><br>
 
+    <label for="content">Content:</label>
+    <textarea id="content" name="content" required></textarea><br>
+
     <button onclick="rewriteblog(
       '${blog._id}',
       document.getElementById('title').value,
-      document.getElementById('content').value,
-      document.getElementById('author').value,
-      document.getElementById('description').value
+      document.getElementById('authour').value,
+      document.getElementById('description').value,
+      document.getElementById('content').value
   )" class="btn" type="submit">Submit</button>
   </form>
     </div>
@@ -90,7 +93,7 @@ editblog = async (id) => {
 
 // to rewrite a specific blog
 
-rewriteblog = async (id, title, content, author, description) => {
+rewriteblog = async (id, title, authour, description, content) => {
   await fetch(`/blogs/${id}`, {
     method: "PATCH",
     headers: {
@@ -98,10 +101,11 @@ rewriteblog = async (id, title, content, author, description) => {
     },
     body: JSON.stringify({
       title: title,
+      authour: authour,
+      description: description,
       content: content,
     }),
   });
-  a,d = author,description
   const response = await fetch(`/blogs/${id}`);
   const blog = await response.json();
   console.log(blog)
@@ -109,6 +113,9 @@ rewriteblog = async (id, title, content, author, description) => {
   blog_list.innerHTML += `
     <div class="specificblog">
             <h2>${blog.title}</h2>
+            <h3>${blog.authour}</h3>
+            <p>created at: ${blog.createdat}</p>
+            <p>${blog.description}</p>
             <p>${blog.content}</p>
             <button onclick="editblog('${blog._id}')"class="btn">Edit Blog</button>
             <button onclick="deleteblog('${blog._id}')"class="btn">Delete Blog</button>
@@ -145,6 +152,7 @@ deleteblog = async (id) => {
 
 // to add a comment on to a blog
 addcomment = async (id) => {
+  const authour = prompt("Enter your name");
   const com = prompt("Enter your comment");
   const fetch_response = await fetch(`/comments/${id}`, {
     method: "POST",
@@ -152,6 +160,7 @@ addcomment = async (id) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      authour: authour,
       content: com,
       blog: id
     }),
@@ -167,7 +176,7 @@ getcomments = async (id) => {
   comments.forEach((comment) => {
     comment_list.innerHTML += `
       <div class="comment">
-              <p>${comment.content}</p>
+              <p>${comment.content} ...${comment.authour}...</p>
               <button onclick="deletecomment('${comment._id}')"class="btn">Delete Comment</button>
       </div>
       `;
