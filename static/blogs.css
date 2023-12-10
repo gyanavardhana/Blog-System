@@ -1,0 +1,227 @@
+body {
+  font-family: "Arial", sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
+  background-image: url("back2.png");
+  background-repeat: no-repeat;
+    background-size: cover;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+#blog_form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+#search_input {
+  padding: 8px;
+  width: 200px;
+}
+
+button {
+  padding: 10px 15px;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+#add_blog,
+#search_blog {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+}
+
+#blog_list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.blog {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin: 10px;
+  max-width: 300px;
+  text-align: center;
+}
+
+.btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.comment {
+  background-color: #f4f4f4;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 10px;
+  width: 80%;
+}
+
+.deleteblog {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 20px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.comment_list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.comment {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 10px;
+  max-width: 300px;
+  text-align: center;
+}
+.editblog {
+  background-image: url("back3.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: 1px solid #ddd;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  text-align: center;
+}
+.editblog h1 {
+  text-align: center;
+  color: #333;
+  margin-top: 20px;
+}
+.editblog form {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.editblog label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  text-align: start;
+}
+
+.editblog input,
+.editblog textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+.editblog textarea {
+  resize: vertical;
+}
+.editblog #description {
+  height: 100px;
+}
+.editblog #content {
+  height: 200px;
+}
+.editblog button {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.specificblog {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin: 20px;
+  width: 80%;
+  text-align: left;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.specificblog h2 {
+  font-size: 2em;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.specificblog h3 {
+  font-size: 1.5em;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.specificblog p {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.specificblog .btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.specificblog .comments {
+  margin-top: 20px;
+}
+
+.specificblog .comments h3 {
+  font-size: 1.2em;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.specificblog .comment_list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.comment {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin: 10px;
+  max-width: 400px;
+  text-align: left;
+}
+
+.comment p {
+  color: #666;
+  margin: 0;
+}
+
+.comment .btn {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  margin-top: 10px;
+  cursor: pointer;
+}
