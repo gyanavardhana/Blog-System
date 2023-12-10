@@ -20,18 +20,23 @@ mongoose.connect('mongodb://127.0.0.1:27017/BlogSystem',{})
 
 const blogschema = new Schema({
     title: String,
+    authour: String,
+    description: String,
     content: String,
     comments: [{ 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Comment'}],
+    createdat: { type: Date, default: Date.now }
 });
 const Blog = mongoose.model('Blog', blogschema);
 
 const commentschema = new Schema({
+    authour: String,
     content: String,
     blog:{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Blog'},
+    createdat: { type: Date, default: Date.now }
 });
 const Comment = mongoose.model('Comment', commentschema);
 
@@ -67,6 +72,8 @@ app.get('/addblog', (req, res) => {
 app.post('/blogs', async (req, res) => {
     const blog = new Blog({
         title: req.body.title,
+        authour: req.body.authour,
+        description: req.body.description,
         content: req.body.content,
     });
     await blog.save();
@@ -79,6 +86,8 @@ app.post('/blogs', async (req, res) => {
 app.patch('/blogs/:id', async (req, res) => {
     const blog = await Blog.findByIdAndUpdate(req.params.id, {
         title: req.body.title,
+        authour: req.body.authour,
+        description: req.body.description,
         content: req.body.content,
     });
     res.send(blog);
@@ -108,6 +117,7 @@ app.get('/comments/details/:id', async (req, res) => {
 app.post('/comments/:id', async (req, res) => {
     const blogId = req.params.id;
     const comment = new Comment({
+        authour: req.body.authour,
         content: req.body.content,
         blog: blogId,
     });
