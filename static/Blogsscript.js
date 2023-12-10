@@ -8,33 +8,47 @@ get_all_blogs = async () => {
   const response = await fetch("/blogs");
   const blogs = await response.json();
   blog_list.innerHTML = "";
-  blogs.forEach((blog) => {
-    blog_list.innerHTML += `
-      <div class="blog">
-              <h2>${blog.title}</h2>
-              <p>${blog.description}</p>
-              <button onclick="readmore('${blog._id}')"class="btn">Read More</button>
+  if (blogs.length == 0) {
+    blog_list.innerHTML = `
+      <div class="noblogs">
+              <h2>No Blogs Found</h2>
       </div>
       `;
-  });
+  }else{
+    blogs.forEach((blog) => {
+      blog_list.innerHTML += `
+        <div class="blog">
+                <h2>${blog.title}</h2>
+                <p>${blog.description}</p>
+                <button onclick="readmore('${blog._id}')"class="btn">Read More</button>
+        </div>
+        `;
+    });
+  }
+  
 };
 
 get_all_blogs();
 
+
+// to get_blogs when searched
 blog_form.addEventListener("click", (event) => {
   event.preventDefault();
   const search_term = search_input.value;
   if (search_term != "") {
     get_blogs(search_term);
+  }else{
+    get_all_blogs();
   }
 });
 
+//to add a new blog
 add_blog.addEventListener("click", (event) => {
   event.preventDefault();
   window.location.href = "/addblog";
 });
 
-// to get all blogs
+
 
 // to get blogs when searched
 get_blogs = async (search_term) => {
@@ -52,8 +66,8 @@ get_blogs = async (search_term) => {
   });
 };
 
-// to get a specific blog based on readmore
 
+// to get a specific blog based on readmore
 readmore = async (id) => {
   const response = await fetch(`/blogs/${id}`);
   const blog = await response.json();
@@ -165,20 +179,24 @@ deleteblog = async (id) => {
 addcomment = async (id) => {
   const authour = prompt("Enter your name");
   const com = prompt("Enter your comment");
-  const fetch_response = await fetch(`/comments/${id}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      authour: authour,
-      content: com,
-      blog: id,
-    }),
-  });
-  readmore(id);
+  if(authour != null && com != null){
+    await fetch(`/comments/${id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        authour: authour,
+        content: com,
+        blog: id,
+      }),
+    });
+    readmore(id);
+  }
+  
 };
 
+// function to get comments on a specific blog
 getcomments = async (id) => {
   const response = await fetch(`/comments/${id}`);
   const comments = await response.json();
@@ -188,12 +206,13 @@ getcomments = async (id) => {
     comment_list.innerHTML += `
       <div class="comment">
               <p>${comment.content} ...${comment.authour}...</p>
-              <button onclick="deletecomment('${comment._id}')"class="btn">Delete Comment</button>
+              <button onclick="deletecomment('${comment._id}')"class="btn">Delete</button>
       </div>
       `;
   });
 };
 
+// function to delete a specific comment
 deletecomment = async (id) => {
   const response = await fetch(`/comments/details/${id}`);
   const comment = await response.json();
