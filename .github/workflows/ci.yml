@@ -32,11 +32,11 @@ jobs:
             -Dsonar.login=$SONAR_TOKEN
 
     # Cleanup step to stop and remove the SonarQube container
-    cleanup:
-      if: always()  # Ensures cleanup runs even if previous steps fail
-      runs-on: ubuntu-latest
-      steps:
-        - name: Stop and Remove SonarQube Container
-          run: |
-            docker stop sonarqube || true
-            docker rm sonarqube || true
+  cleanup:
+    if: always()  # Ensures cleanup runs even if previous steps fail
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stop and Remove SonarQube Container
+        run: |
+          docker stop sonarqube || true
+          docker rm sonarqube || true
