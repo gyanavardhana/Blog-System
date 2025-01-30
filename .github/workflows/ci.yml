@@ -1,0 +1,53 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    services:
+      sonarqube:
+        image: sonarqube:lts
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd="curl -s http://localhost:9000/api/system/health | grep UP"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+          -e SONARQUBE_JDBC_URL=jdbc:sqlite:./sonar.db
+          -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+          
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for SonarQube to be ready
+        run: |
+          echo "Waiting for SonarQube to start..."
+          until curl -s http://localhost:9000/api/system/health | grep UP; do
+            sleep 5
+          done
+          echo "SonarQube is up!"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run SonarQube Scanner
+        run: |
+          npx sonarqube-scanner \
+            -Dsonar.projectKey=my-nodejs-project \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=http://localhost:9000 \
+            -Dsonar.login=admin \
+            -Dsonar.password=admin
+
+      - name: Stop SonarQube Container
+        if: always()
+        run: docker stop $(docker ps -q --filter ancestor=sonarqube:lts) && docker rm $(docker ps -aq --filter ancestor=sonarqube:lts)
