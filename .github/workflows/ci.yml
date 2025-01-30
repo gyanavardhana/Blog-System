@@ -2,52 +2,75 @@ name: SonarQube Analysis
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   sonarqube:
+    name: SonarQube Scan
     runs-on: ubuntu-latest
+    
     services:
       sonarqube:
-        image: sonarqube:lts
+        image: sonarqube:latest
         ports:
           - 9000:9000
-        options: >-
-          --health-cmd="curl -s http://localhost:9000/api/system/health | grep UP"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-          -e SONARQUBE_JDBC_URL=jdbc:sqlite:./sonar.db
-          -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
           
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for SonarQube to be ready
-        run: |
-          echo "Waiting for SonarQube to start..."
-          until curl -s http://localhost:9000/api/system/health | grep UP; do
-            sleep 5
-          done
-          echo "SonarQube is up!"
-
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
       - name: Install dependencies
-        run: npm install
-
-      - name: Run SonarQube Scanner
+        run: npm ci
+        
+      - name: Wait for SonarQube to start
         run: |
-          npx sonarqube-scanner \
-            -Dsonar.projectKey=my-nodejs-project \
+          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000)" != "200" ]]; do sleep 5; done'
+          sleep 10
+          
+      - name: Create SonarQube project
+        run: |
+          curl -X POST -u admin:admin \
+          "http://localhost:9000/api/projects/create" \
+          -d "name=my-project&project=my-project"
+          
+      - name: Generate authentication token
+        id: generate_token
+        run: |
+          TOKEN=$(curl -X POST -u admin:admin \
+          "http://localhost:9000/api/user_tokens/generate" \
+          -d "name=github-actions" | jq -r '.token')
+          echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
+          
+      - name: Install SonarScanner
+        run: |
+          npm install -g sonarqube-scanner
+          
+      - name: Run SonarQube analysis
+        env:
+          SONAR_HOST_URL: "http://localhost:9000"
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=my-project \
             -Dsonar.sources=. \
-            -Dsonar.host.url=http://localhost:9000 \
-            -Dsonar.login=admin \
-            -Dsonar.password=admin
-
-      - name: Stop SonarQube Container
-        if: always()
-        run: docker stop $(docker ps -q --filter ancestor=sonarqube:lts) && docker rm $(docker ps -aq --filter ancestor=sonarqube:lts)
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.login=$SONAR_TOKEN \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            
+      - name: Check quality gate
+        run: |
+          STATUS=$(curl -u admin:admin \
+          "http://localhost:9000/api/qualitygates/project_status?projectKey=my-project" \
+          | jq -r '.projectStatus.status')
+          
+          if [ "$STATUS" = "ERROR" ]; then
+            echo "Quality gate failed!"
+            exit 1
+          fi
