@@ -17,8 +17,19 @@ jobs:
       - name: Start SonarQube
         run: |
           docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
-          sleep 20  # Adjust as needed
-
+          
+      - name: Wait for SonarQube to be available
+        run: |
+          echo "Waiting for SonarQube to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:9000 | grep -q "SonarQube"; then
+              echo "SonarQube is up!"
+              break
+            fi
+            echo "Waiting..."
+            sleep 10
+          done
+          
       - name: Install Dependencies
         run: npm install
 
@@ -33,4 +44,3 @@ jobs:
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST \
             -Dsonar.login=$SONAR_TOKEN
-
