@@ -30,7 +30,7 @@ jobs:
         run: |
           export SONAR_HOST="http://localhost:9000"
           export SONAR_PROJECT_KEY="your_project"
-          export SONAR_TOKEN="your_sonar_token"
+          export SONAR_TOKEN="18d181f56070e48bf546a27b5470f49cbd34842d"
 
           sonar-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
@@ -38,11 +38,4 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST \
             -Dsonar.login=$SONAR_TOKEN
 
-    cleanup:
-      if: always()  # Ensures cleanup runs even if previous steps fail
-      runs-on: ubuntu-latest
-      steps:
-        - name: Stop and Remove SonarQube Container
-          run: |
-            docker stop sonarqube || true
-            docker rm sonarqube || true
+
