@@ -13,9 +13,14 @@ jobs:
     
     services:
       sonarqube:
-        image: sonarqube:latest
+        image: sonarqube:9.9.2-community # Using a specific, stable version
         ports:
           - 9000:9000
+        options: >-
+          --health-cmd="curl -f http://localhost:9000/api/system/status"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
           
     steps:
       - uses: actions/checkout@v3
@@ -30,13 +35,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Wait for SonarQube to start
+      - name: Wait for SonarQube to be ready
         run: |
-          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:9000)" != "200" ]]; do sleep 5; done'
-          sleep 10
+          timeout 300 bash -c '
+          while [[ "$(curl -s -u admin:admin http://localhost:9000/api/system/status | grep -o '"status":"UP"')" != '"status":"UP"' ]]; do 
+            echo "Waiting for SonarQube to be ready..."
+            sleep 10
+          done'
+          
+      - name: Install compatible SonarScanner
+        run: |
+          npm install -g sonarqube-scanner@3.0.0
           
       - name: Create SonarQube project
         run: |
+          # Wait for SonarQube to finish initialization
+          sleep 30
+          
           curl -X POST -u admin:admin \
           "http://localhost:9000/api/projects/create" \
           -d "name=my-project&project=my-project"
@@ -44,14 +59,13 @@ jobs:
       - name: Generate authentication token
         id: generate_token
         run: |
+          # Wait to ensure project is created
+          sleep 10
+          
           TOKEN=$(curl -X POST -u admin:admin \
           "http://localhost:9000/api/user_tokens/generate" \
           -d "name=github-actions" | jq -r '.token')
           echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
-          
-      - name: Install SonarScanner
-        run: |
-          npm install -g sonarqube-scanner
           
       - name: Run SonarQube analysis
         env:
@@ -61,11 +75,16 @@ jobs:
             -Dsonar.projectKey=my-project \
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.login=$SONAR_TOKEN \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+            -Dsonar.sourceEncoding=UTF-8 \
+            -Dsonar.scm.provider=git
             
       - name: Check quality gate
         run: |
+          # Wait for analysis to complete
+          sleep 20
+          
           STATUS=$(curl -u admin:admin \
           "http://localhost:9000/api/qualitygates/project_status?projectKey=my-project" \
           | jq -r '.projectStatus.status')
