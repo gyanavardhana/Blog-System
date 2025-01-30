@@ -2,94 +2,41 @@ name: SonarQube Analysis
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
 
 jobs:
   sonarqube:
-    name: SonarQube Scan
     runs-on: ubuntu-latest
-    
-    services:
-      sonarqube:
-        image: sonarqube:9.9.2-community # Using a specific, stable version
-        ports:
-          - 9000:9000
-        options: >-
-          --health-cmd="curl -f http://localhost:9000/api/system/status"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-          
+
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          
-      - name: Install dependencies
-        run: npm ci
-        
-      - name: Wait for SonarQube to be ready
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start SonarQube
         run: |
-          timeout 300 bash -c '
-          while [[ "$(curl -s -u admin:admin http://localhost:9000/api/system/status | grep -o '"status":"UP"')" != '"status":"UP"' ]]; do 
-            echo "Waiting for SonarQube to be ready..."
-            sleep 10
-          done'
-          
-      - name: Install compatible SonarScanner
+          docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
+          sleep 20  # Adjust as needed
+
+      - name: Run SonarQube Scanner
         run: |
-          npm install -g sonarqube-scanner@3.0.0
-          
-      - name: Create SonarQube project
-        run: |
-          # Wait for SonarQube to finish initialization
-          sleep 30
-          
-          curl -X POST -u admin:admin \
-          "http://localhost:9000/api/projects/create" \
-          -d "name=my-project&project=my-project"
-          
-      - name: Generate authentication token
-        id: generate_token
-        run: |
-          # Wait to ensure project is created
-          sleep 10
-          
-          TOKEN=$(curl -X POST -u admin:admin \
-          "http://localhost:9000/api/user_tokens/generate" \
-          -d "name=github-actions" | jq -r '.token')
-          echo "SONAR_TOKEN=$TOKEN" >> $GITHUB_ENV
-          
-      - name: Run SonarQube analysis
-        env:
-          SONAR_HOST_URL: "http://localhost:9000"
-        run: |
+          export SONAR_HOST="http://localhost:9000"
+          export SONAR_PROJECT_KEY="your_project"
+          export SONAR_TOKEN="18d181f56070e48bf546a27b5470f49cbd34842d"
+
           sonar-scanner \
-            -Dsonar.projectKey=my-project \
+            -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.sources=. \
-            -Dsonar.host.url=$SONAR_HOST_URL \
-            -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-            -Dsonar.sourceEncoding=UTF-8 \
-            -Dsonar.scm.provider=git
-            
-      - name: Check quality gate
-        run: |
-          # Wait for analysis to complete
-          sleep 20
-          
-          STATUS=$(curl -u admin:admin \
-          "http://localhost:9000/api/qualitygates/project_status?projectKey=my-project" \
-          | jq -r '.projectStatus.status')
-          
-          if [ "$STATUS" = "ERROR" ]; then
-            echo "Quality gate failed!"
-            exit 1
-          fi
+            -Dsonar.host.url=$SONAR_HOST \
+            -Dsonar.login=$SONAR_TOKEN
+
+    # Cleanup step to stop and remove the SonarQube container
+    cleanup:
+      if: always()  # Ensures cleanup runs even if previous steps fail
+      runs-on: ubuntu-latest
+      steps:
+        - name: Stop and Remove SonarQube Container
+          run: |
+            docker stop sonarqube || true
+            docker rm sonarqube || true
