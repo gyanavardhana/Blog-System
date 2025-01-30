@@ -19,12 +19,8 @@ jobs:
           docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
           sleep 20  # Adjust as needed
 
-      - name: Install SonarScanner
-        run: |
-          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-          unzip sonar-scanner.zip
-          sudo mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
-          echo "export PATH=$PATH:/opt/sonar-scanner/bin" >> $GITHUB_ENV
+      - name: Install Dependencies
+        run: npm install
 
       - name: Run SonarQube Scanner
         run: |
@@ -32,10 +28,9 @@ jobs:
           export SONAR_PROJECT_KEY="your_project"
           export SONAR_TOKEN="18d181f56070e48bf546a27b5470f49cbd34842d"
 
-          sonar-scanner \
+          npx sonarqube-scanner \
             -Dsonar.projectKey=$SONAR_PROJECT_KEY \
             -Dsonar.sources=. \
             -Dsonar.host.url=$SONAR_HOST \
             -Dsonar.login=$SONAR_TOKEN
-
 
